@@ -64,12 +64,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex items-center gap-3 px-4 py-3 mb-4">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 p-[2px]">
               <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center text-xs font-bold">
-                {user.email?.[0].toUpperCase()}
+                {(user.email?.[0] || 'A').toUpperCase()}
               </div>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-white truncate">{user.displayName || 'Admin'}</p>
-              <p className="text-xs text-slate-500 truncate">{user.email}</p>
+              <p className="text-xs text-slate-500 truncate">{user.email || 'Anonymous Session'}</p>
             </div>
           </div>
           <button 

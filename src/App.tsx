@@ -10,7 +10,7 @@ import {
 import { 
   auth, 
   db, 
-  loginWithGoogle, 
+  loginWithToken, 
   logout 
 } from './lib/firebase';
 import { 
@@ -73,10 +73,26 @@ const App: React.FC = () => {
   const [keys, setKeys] = useState<LicenseKey[]>([]);
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-
+  
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (!currentUser) {
+        // Auto-login with the default admin credentials
+        try {
+          const response = await fetch('/api/admin-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: '777' })
+          });
+          const data = await response.json();
+          if (data.status === 'success' && data.token) {
+            await loginWithToken(data.token);
+          }
+        } catch (error) {
+          console.error('Auto-login failed:', error);
+        }
+      }
+      setUser(currentUser);
       setLoading(false);
     });
     return () => unsubscribe();
@@ -106,15 +122,6 @@ const App: React.FC = () => {
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
-  };
-
-  const handleLogin = async () => {
-    try {
-      await loginWithGoogle();
-    } catch (error) {
-      console.error('Login error:', error);
-      showNotification('Login failed. Please try again.', 'error');
-    }
   };
 
   const handleLogout = async () => {
@@ -274,37 +281,6 @@ const App: React.FC = () => {
             <Zap className="text-cyan-400 animate-pulse" size={20} />
           </div>
         </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-[#020202] flex items-center justify-center p-4 overflow-hidden relative">
-        {/* Background Effects */}
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 blur-[120px] rounded-full" />
-        
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md relative z-10">
-          <GlassCard className="text-center space-y-8 border-cyan-500/20">
-            <div className="space-y-4">
-              <div className="inline-flex p-4 rounded-3xl bg-cyan-500/10 text-cyan-400 shadow-[0_0_30px_rgba(6,182,212,0.2)]">
-                <Zap size={48} strokeWidth={2.5} />
-              </div>
-              <h1 className="text-4xl font-black tracking-tighter text-white uppercase">
-                ROHIT X <span className="text-cyan-400">ANKIT</span>
-              </h1>
-              <p className="text-slate-500 font-medium">License Key Management System</p>
-            </div>
-
-            <div className="space-y-4">
-              <NeonButton onClick={handleLogin} className="w-full py-4 text-lg" icon={Zap}>
-                Admin Login
-              </NeonButton>
-              <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.2em]">Authorized Personnel Only</p>
-            </div>
-          </GlassCard>
-        </motion.div>
       </div>
     );
   }

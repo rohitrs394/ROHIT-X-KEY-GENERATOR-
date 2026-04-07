@@ -3,6 +3,7 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { initializeApp, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 import firebaseConfig from "./firebase-applet-config.json";
 import rateLimit from "express-rate-limit";
 
@@ -27,6 +28,29 @@ async function startServer() {
   // API Routes
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
+  });
+
+  // Admin Login with Password -> Custom Token
+  app.post("/api/admin-login", async (req, res) => {
+    const { password } = req.body;
+
+    if (password === "777") {
+      try {
+        const auth = getAuth();
+        // Generate a custom token for a fixed admin UID
+        const customToken = await auth.createCustomToken("admin_rohit", {
+          role: "admin",
+          admin: true
+        });
+        
+        res.json({ status: "success", token: customToken });
+      } catch (error) {
+        console.error("Error creating custom token:", error);
+        res.status(500).json({ status: "error", message: "Failed to generate access token" });
+      }
+    } else {
+      res.status(401).json({ status: "error", message: "Invalid admin password" });
+    }
   });
 
   // POST /verify-key
