@@ -75,6 +75,11 @@ const App: React.FC = () => {
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   
   useEffect(() => {
+    // Safety timeout to prevent infinite loading screen
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
         // Auto-login with the default admin credentials
@@ -83,19 +88,30 @@ const App: React.FC = () => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password: '777' })
-          });
-          const data = await response.json();
-          if (data.status === 'success' && data.token) {
-            await loginWithToken(data.token);
+          }).catch(() => null); // Handle network errors
+
+          if (response && response.ok) {
+            const data = await response.json();
+            if (data.status === 'success' && data.token) {
+              await loginWithToken(data.token);
+              // The next onAuthStateChanged fire will handle the success
+              return; 
+            }
           }
         } catch (error) {
           console.error('Auto-login failed:', error);
         }
       }
+      
       setUser(currentUser);
       setLoading(false);
+      clearTimeout(timeout);
     });
-    return () => unsubscribe();
+    
+    return () => {
+      unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   useEffect(() => {

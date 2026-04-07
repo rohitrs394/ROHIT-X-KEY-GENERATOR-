@@ -20,7 +20,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onUpdateSettings }) =>
     requireDeviceBinding: true,
     logVerifications: true,
     apiRateLimit: 100,
-    notificationEmail: user.email || 'admin@system.local',
+    notificationEmail: user?.email || 'admin@system.local',
   });
 
   const handleSave = () => {
@@ -121,12 +121,12 @@ export const Settings: React.FC<SettingsProps> = ({ user, onUpdateSettings }) =>
             <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900/50 border border-slate-800/50">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 p-[2px]">
                 <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center text-xl font-black">
-                  {(user.email?.[0] || 'A').toUpperCase()}
+                  {(user?.email?.[0] || 'A').toUpperCase()}
                 </div>
               </div>
               <div>
-                <p className="text-lg font-black text-white">{user.displayName || 'Administrator'}</p>
-                <p className="text-sm text-slate-500">{user.email || 'Anonymous Session'}</p>
+                <p className="text-lg font-black text-white">{user?.displayName || 'Administrator'}</p>
+                <p className="text-sm text-slate-500">{user?.email || 'Anonymous Session'}</p>
                 <span className="inline-block mt-2 px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-400 text-[10px] font-black uppercase tracking-widest border border-cyan-500/20">Super Admin</span>
               </div>
             </div>

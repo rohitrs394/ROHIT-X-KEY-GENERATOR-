@@ -29,7 +29,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ keys, logs }) => {
   }).reverse();
 
   const chartData = last7Days.map(day => {
-    const count = keys.filter(k => k.createdAt && format(k.createdAt.toDate(), 'MMM d') === day).length;
+    const count = keys.filter(k => {
+      try {
+        return k.createdAt && typeof k.createdAt.toDate === 'function' && format(k.createdAt.toDate(), 'MMM d') === day;
+      } catch (e) {
+        return false;
+      }
+    }).length;
     return { name: day, keys: count };
   });
 
@@ -38,6 +44,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ keys, logs }) => {
     { name: 'Paused', value: stats.paused, color: '#f59e0b' },
     { name: 'Expired', value: stats.expired, color: '#f43f5e' },
   ].filter(d => d.value > 0);
+
+  const recentLogs = Array.isArray(logs) ? logs.slice(0, 5) : [];
 
   return (
     <div className="space-y-8">
@@ -143,7 +151,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ keys, logs }) => {
           </div>
         </div>
         <div className="space-y-4">
-          {logs.slice(0, 5).map((log) => (
+          {recentLogs.map((log: any) => (
             <div key={log.id} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900/50 border border-slate-800/50">
               <div className={`p-2 rounded-lg ${
                 log.type === 'key_generated' ? 'bg-cyan-500/10 text-cyan-400' :
@@ -157,7 +165,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ keys, logs }) => {
               <div className="flex-1">
                 <p className="text-sm text-slate-300">{log.details}</p>
                 <p className="text-[10px] text-slate-500 mt-0.5">
-                  {log.timestamp ? format(log.timestamp.toDate(), 'MMM d, HH:mm:ss') : 'Just now'}
+                  {log.timestamp && typeof log.timestamp.toDate === 'function' ? format(log.timestamp.toDate(), 'MMM d, HH:mm:ss') : 'Just now'}
                   {log.ip && <span className="ml-2 text-slate-600">IP: {log.ip}</span>}
                 </p>
               </div>
