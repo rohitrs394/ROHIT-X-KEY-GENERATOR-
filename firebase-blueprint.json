@@ -1,0 +1,112 @@
+{
+  "entities": {
+    "LicenseKey": {
+      "title": "License Key",
+      "description": "A secure license key for application access.",
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "The unique license key (e.g., ROHIT-XXXX-XXXX)."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "expired", "paused", "disabled"],
+          "description": "Current status of the key."
+        },
+        "expiryType": {
+          "type": "string",
+          "enum": ["1day", "7days", "custom", "lifetime"],
+          "description": "Type of expiry set for the key."
+        },
+        "expiryDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date and time when the key expires."
+        },
+        "note": {
+          "type": "string",
+          "description": "Admin note or tag for the key."
+        },
+        "appName": {
+          "type": "string",
+          "description": "Name of the application this key is linked to."
+        },
+        "appLink": {
+          "type": "string",
+          "description": "Link to the application."
+        },
+        "deviceId": {
+          "type": "string",
+          "description": "Optional hardware ID binding."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the key was generated."
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "UID of the admin who created the key."
+        }
+      },
+      "required": ["key", "status", "expiryType", "createdAt", "createdBy"]
+    },
+    "ActivityLog": {
+      "title": "Activity Log",
+      "description": "Logs of admin actions and key verifications.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["key_generated", "key_updated", "key_deleted", "key_verification"],
+          "description": "Type of activity."
+        },
+        "details": {
+          "type": "string",
+          "description": "Detailed description of the activity."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the activity occurred."
+        },
+        "adminId": {
+          "type": "string",
+          "description": "UID of the admin (if applicable)."
+        }
+      },
+      "required": ["type", "details", "timestamp"]
+    },
+    "AdminProfile": {
+      "title": "Admin Profile",
+      "description": "Profile data for admin users.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin"]
+        }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/keys/{keyId}": {
+      "schema": "LicenseKey",
+      "description": "Collection of license keys."
+    },
+    "/logs/{logId}": {
+      "schema": "ActivityLog",
+      "description": "Collection of activity logs."
+    },
+    "/admins/{adminId}": {
+      "schema": "AdminProfile",
+      "description": "Collection of admin profiles."
+    }
+  }
+}
