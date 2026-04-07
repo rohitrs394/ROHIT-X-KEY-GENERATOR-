@@ -2,7 +2,8 @@ import React from 'react';
 import { 
   Smartphone, Code, Terminal, 
   Copy, CheckCircle2, Zap, 
-  Globe, Shield, Activity 
+  Globe, Shield, Activity,
+  AlertTriangle
 } from 'lucide-react';
 import { GlassCard } from './ui/GlassCard';
 import { NeonButton } from './ui/NeonButton';
@@ -31,6 +32,24 @@ export const Connect: React.FC<ConnectProps> = ({ onCopy }) => {
   }
 }`;
 
+  const serverlessExample = `// Import Firebase SDK
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+
+async function verifyKey(licenseKey, deviceId) {
+  const db = getFirestore();
+  const q = query(
+    collection(db, 'keys'), 
+    where('key', '==', licenseKey)
+  );
+  
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return { status: 'invalid' };
+  
+  const keyData = snapshot.docs[0].data();
+  // Check status and expiry...
+  return { status: keyData.status, data: keyData };
+}`;
+
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       <div className="flex items-center gap-4 mb-8">
@@ -43,13 +62,22 @@ export const Connect: React.FC<ConnectProps> = ({ onCopy }) => {
         </div>
       </div>
 
+      {/* Server Status Warning */}
+      <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-4">
+        <AlertTriangle className="text-amber-500 shrink-0 mt-1" size={20} />
+        <div>
+          <p className="text-sm font-bold text-amber-500 uppercase tracking-tight">Backend Server Notice</p>
+          <p className="text-xs text-slate-400 mt-1">The API Endpoint below requires a Node.js backend. If you are hosting on Netlify, use the <span className="text-cyan-400 font-bold">Serverless Method</span> instead.</p>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* API Documentation */}
         <div className="space-y-6">
           <GlassCard className="space-y-6">
             <div className="flex items-center gap-3 mb-2">
               <Globe className="text-cyan-400" size={20} />
-              <h3 className="text-lg font-bold text-white">Verification API</h3>
+              <h3 className="text-lg font-bold text-white">API Endpoint (Server Required)</h3>
             </div>
             
             <div className="space-y-4">
@@ -67,35 +95,23 @@ export const Connect: React.FC<ConnectProps> = ({ onCopy }) => {
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">HTTP Method</label>
                 <div className="inline-block px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-black border border-emerald-500/20">POST</div>
               </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Request Headers</label>
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                  <code className="text-xs text-slate-400">Content-Type: application/json</code>
-                </div>
-              </div>
             </div>
           </GlassCard>
 
-          <GlassCard className="space-y-6">
-            <div className="flex items-center gap-3 mb-2">
-              <Shield className="text-purple-400" size={20} />
-              <h3 className="text-lg font-bold text-white">Security Features</h3>
+          <GlassCard className="space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3">
+                <Zap className="text-cyan-400" size={20} />
+                <h3 className="text-lg font-bold text-white">Serverless Method (Netlify)</h3>
+              </div>
+              <button onClick={() => onCopy(serverlessExample)} className="p-2 text-slate-500 hover:text-cyan-400 transition-colors">
+                <Copy size={16} />
+              </button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                { label: 'Rate Limiting', desc: '100 req / 15 mins', icon: Activity },
-                { label: 'Device Binding', desc: '1 Key = 1 Device', icon: Smartphone },
-                { label: 'IP Logging', desc: 'Track every request', icon: Globe },
-                { label: 'Real-time', desc: 'Instant status updates', icon: Zap },
-              ].map((f) => (
-                <div key={f.label} className="p-4 rounded-2xl bg-slate-900/50 border border-slate-800/50">
-                  <f.icon className="text-slate-500 mb-2" size={16} />
-                  <p className="text-xs font-black text-white uppercase tracking-tighter">{f.label}</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">{f.desc}</p>
-                </div>
-              ))}
-            </div>
+            <p className="text-xs text-slate-500 mb-2">Query Firestore directly from your client app. No server needed.</p>
+            <pre className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-[10px] text-cyan-400/80 overflow-x-auto leading-relaxed">
+              {serverlessExample}
+            </pre>
           </GlassCard>
         </div>
 

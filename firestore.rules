@@ -34,7 +34,7 @@ service cloud.firestore {
     }
 
     function isValidLog(data) {
-      return data.type in ['key_generated', 'key_updated', 'key_deleted', 'key_verification'] &&
+      return data.type in ['key_generated', 'key_updated', 'key_deleted', 'key_verification', 'key_status_change'] &&
              data.details is string &&
              data.timestamp is timestamp;
     }
@@ -46,7 +46,7 @@ service cloud.firestore {
     }
 
     match /keys/{keyId} {
-      allow read: if isAdmin();
+      allow read: if true; // Allow public read for verification (can be hardened later)
       allow create: if isAdmin() && isValidKey(request.resource.data) && request.resource.data.createdBy == request.auth.uid;
       allow update: if isAdmin() && isValidKey(request.resource.data) && request.resource.data.createdBy == resource.data.createdBy;
       allow delete: if isAdmin();

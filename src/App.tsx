@@ -11,6 +11,7 @@ import {
   auth, 
   db, 
   loginWithToken, 
+  loginAnonymously,
   logout 
 } from './lib/firebase';
 import { 
@@ -70,6 +71,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isServerDown, setIsServerDown] = useState(false);
   const [keys, setKeys] = useState<LicenseKey[]>([]);
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -88,19 +90,31 @@ const App: React.FC = () => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password: '777' })
-          }).catch(() => null); // Handle network errors
+          }).catch(() => {
+            setIsServerDown(true);
+            return null;
+          });
 
           if (response && response.ok) {
             const data = await response.json();
             if (data.status === 'success' && data.token) {
               await loginWithToken(data.token);
-              // The next onAuthStateChanged fire will handle the success
+              setIsServerDown(false);
               return; 
             }
+          } else {
+            // Fallback to Anonymous Auth if server is down (Netlify)
+            setIsServerDown(true);
+            console.log('Server not reachable, falling back to anonymous auth...');
+            await loginAnonymously().catch(e => console.error('Anonymous login failed:', e));
           }
         } catch (error) {
           console.error('Auto-login failed:', error);
+          setIsServerDown(true);
         }
+      } else {
+        // Check if server is reachable even if logged in
+        fetch('/api/health').then(r => setIsServerDown(!r.ok)).catch(() => setIsServerDown(true));
       }
       
       setUser(currentUser);
@@ -121,12 +135,17 @@ const App: React.FC = () => {
     const unsubscribeKeys = onSnapshot(keysQuery, (snapshot) => {
       const keysData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LicenseKey));
       setKeys(keysData);
+    }, (error) => {
+      console.error('Keys snapshot error:', error);
+      showNotification('Failed to load keys. Check Firebase permissions.', 'error');
     });
 
     const logsQuery = query(collection(db, 'logs'), orderBy('timestamp', 'desc'));
     const unsubscribeLogs = onSnapshot(logsQuery, (snapshot) => {
       const logsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ActivityLog));
       setLogs(logsData);
+    }, (error) => {
+      console.error('Logs snapshot error:', error);
     });
 
     return () => {
@@ -323,6 +342,7 @@ const App: React.FC = () => {
         setIsSidebarOpen={setIsSidebarOpen} 
         user={user} 
         onLogout={handleLogout} 
+        isServerDown={isServerDown}
       />
 
       {/* Main Content */}
@@ -342,9 +362,13 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">System Online</span>
+            <div className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border ${
+              isServerDown ? 'bg-rose-500/10 border-rose-500/20' : 'bg-emerald-500/10 border-emerald-500/20'
+            }`}>
+              <div className={`w-1.5 h-1.5 rounded-full ${isServerDown ? 'bg-rose-400 animate-pulse' : 'bg-emerald-400 animate-pulse'}`} />
+              <span className={`text-[10px] font-black uppercase tracking-widest ${isServerDown ? 'text-rose-400' : 'text-emerald-400'}`}>
+                {isServerDown ? 'Server Offline' : 'Server Online'}
+              </span>
             </div>
           </div>
         </header>

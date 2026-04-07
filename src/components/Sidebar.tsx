@@ -12,10 +12,11 @@ interface SidebarProps {
   setIsSidebarOpen: (open: boolean) => void;
   user: any;
   onLogout: () => void;
+  isServerDown: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
-  activeTab, setActiveTab, isSidebarOpen, setIsSidebarOpen, user, onLogout 
+  activeTab, setActiveTab, isSidebarOpen, setIsSidebarOpen, user, onLogout, isServerDown
 }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -44,7 +45,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="p-2 rounded-lg bg-cyan-500 text-black shadow-[0_0_15px_rgba(6,182,212,0.6)]">
             <Zap size={20} />
           </div>
-          <span className="text-xl font-black tracking-tighter text-white uppercase">ROHIT X <span className="text-cyan-400">ANKIT</span></span>
+          <div className="flex flex-col">
+            <span className="text-xl font-black tracking-tighter text-white uppercase leading-none">ROHIT X <span className="text-cyan-400">ANKIT</span></span>
+            <div className="flex items-center gap-1.5 mt-1">
+              <div className={`w-2 h-2 rounded-full ${isServerDown ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`} />
+              <span className={`text-[10px] font-bold uppercase tracking-widest ${isServerDown ? 'text-rose-400' : 'text-emerald-400'}`}>
+                {isServerDown ? 'Server Offline' : 'Server Online'}
+              </span>
+            </div>
+          </div>
         </div>
 
         <nav className="flex-1 space-y-2">
