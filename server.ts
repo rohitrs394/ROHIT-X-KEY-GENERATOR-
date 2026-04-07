@@ -4,10 +4,18 @@ import path from "path";
 import { initializeApp, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import firebaseConfig from "./firebase-applet-config.json";
+import rateLimit from "express-rate-limit";
 
 // Initialize firebase-admin
 initializeApp({
   projectId: firebaseConfig.projectId,
+});
+
+// Rate limiter for verification API
+const verifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: { status: "error", message: "Too many requests from this IP, please try again after 15 minutes" }
 });
 
 async function startServer() {
@@ -22,8 +30,9 @@ async function startServer() {
   });
 
   // POST /verify-key
-  app.post("/api/verify-key", async (req, res) => {
+  app.post("/api/verify-key", verifyLimiter, async (req, res) => {
     const { key, deviceId } = req.body;
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
     if (!key) {
       return res.status(400).json({ status: "invalid", message: "Key is required" });
@@ -65,12 +74,13 @@ async function startServer() {
         return res.status(403).json({ status: "invalid", message: "Key is bound to another device", reason: "device_mismatch" });
       }
 
-      // Log the verification
+      // Log the verification with IP
       await db.collection('logs').add({
         type: 'key_verification',
-        details: `Key verified: ${key} ${deviceId ? `(Device: ${deviceId})` : ''}`,
+        details: `Key verified: ${key} ${deviceId ? `(Device: ${deviceId})` : ''} from IP: ${ip}`,
         timestamp: new Date(),
-        adminId: 'system'
+        adminId: 'system',
+        ip: ip
       });
 
       res.json({
